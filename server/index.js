@@ -94,18 +94,31 @@ function deleteLocalImage(url) {
     }
 }
 
+const apiRouter = express.Router();
+
+// Serve uploaded files statically (Keep this global or move to /api/uploads depending on need, usually global is fine but let's keep it simple)
+// app.use('/uploads', express.static('uploads')); // Already defined above
+
+// Helper to download external images (Keep as is)
+// ...
+
 // POST /upload - Upload a single file
-app.post('/upload', upload.single('photo'), (req, res) => {
+apiRouter.post('/upload', upload.single('photo'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
     }
     // Return the URL to access the file
+    // IMPORTANT: The URL returned must be accessible from outside.
+    // If we return http://localhost:3000/uploads/..., it won't work for mobile.
+    // We should return a relative path or the full public URL.
+    // For now, let's return the relative path /uploads/filename
     const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    // Note: req.get('host') will be the Nginx host (eu.vrf.dev.br) if proxy headers are set correctly.
     res.json({ url: fileUrl });
 });
 
 // GET /projects - List all projects
-app.get('/projects', async (req, res) => {
+apiRouter.get('/projects', async (req, res) => {
     try {
         const projects = await prisma.project.findMany({
             orderBy: { createdAt: 'desc' }
@@ -123,7 +136,7 @@ app.get('/projects', async (req, res) => {
 });
 
 // GET /projects/:id - Get one project
-app.get('/projects/:id', async (req, res) => {
+apiRouter.get('/projects/:id', async (req, res) => {
     const { id } = req.params;
     try {
         const project = await prisma.project.findUnique({
@@ -142,7 +155,7 @@ app.get('/projects/:id', async (req, res) => {
 });
 
 // POST /projects - Create new project
-app.post('/projects', async (req, res) => {
+apiRouter.post('/projects', async (req, res) => {
     const { title, thumbnail, description, fullDescription, images } = req.body;
 
     // Basic validation
@@ -180,7 +193,7 @@ app.post('/projects', async (req, res) => {
 });
 
 // PUT /projects/:id - Update project
-app.put('/projects/:id', async (req, res) => {
+apiRouter.put('/projects/:id', async (req, res) => {
     const { id } = req.params;
     const { title, thumbnail, description, fullDescription, images } = req.body;
     try {
@@ -214,7 +227,7 @@ app.put('/projects/:id', async (req, res) => {
 });
 
 // DELETE /projects/:id - Delete project
-app.delete('/projects/:id', async (req, res) => {
+apiRouter.delete('/projects/:id', async (req, res) => {
     const { id } = req.params;
     console.log(`Received DELETE request for ID: ${id}`);
     try {
@@ -244,6 +257,9 @@ app.delete('/projects/:id', async (req, res) => {
         res.status(500).json({ error: 'Error deleting project', details: error.message });
     }
 });
+
+// Mount the router at /api
+app.use('/api', apiRouter);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
