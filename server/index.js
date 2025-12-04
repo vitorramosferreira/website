@@ -117,6 +117,11 @@ apiRouter.post('/upload', upload.single('photo'), (req, res) => {
     res.json({ url: fileUrl });
 });
 
+// Helper to generate random slug
+function generateSlug() {
+    return Math.random().toString(36).substring(2, 8);
+}
+
 // GET /projects - List all projects
 apiRouter.get('/projects', async (req, res) => {
     try {
@@ -135,12 +140,12 @@ apiRouter.get('/projects', async (req, res) => {
     }
 });
 
-// GET /projects/:id - Get one project
-apiRouter.get('/projects/:id', async (req, res) => {
-    const { id } = req.params;
+// GET /projects/:slug - Get one project by slug
+apiRouter.get('/projects/:slug', async (req, res) => {
+    const { slug } = req.params;
     try {
         const project = await prisma.project.findUnique({
-            where: { id: parseInt(id) }
+            where: { slug: slug }
         });
         if (!project) return res.status(404).json({ error: 'Project not found' });
 
@@ -173,13 +178,20 @@ apiRouter.post('/projects', async (req, res) => {
             processedImages = await Promise.all(images.map(img => downloadImage(img, req)));
         }
 
+        // Generate a unique slug
+        let slug = generateSlug();
+        // Simple check to ensure uniqueness (retry once if collision, though unlikely)
+        let existing = await prisma.project.findUnique({ where: { slug } });
+        if (existing) slug = generateSlug();
+
         const newProject = await prisma.project.create({
             data: {
                 title,
                 thumbnail: processedThumbnail,
                 description,
                 fullDescription: fullDescription || '',
-                images: JSON.stringify(processedImages)
+                images: JSON.stringify(processedImages),
+                slug: slug
             }
         });
         res.status(201).json({
@@ -192,9 +204,9 @@ apiRouter.post('/projects', async (req, res) => {
     }
 });
 
-// PUT /projects/:id - Update project
-apiRouter.put('/projects/:id', async (req, res) => {
-    const { id } = req.params;
+// PUT /projects/:slug - Update project
+apiRouter.put('/projects/:slug', async (req, res) => {
+    const { slug } = req.params;
     const { title, thumbnail, description, fullDescription, images } = req.body;
     try {
         // Process thumbnail
@@ -207,7 +219,7 @@ apiRouter.put('/projects/:id', async (req, res) => {
         }
 
         const updatedProject = await prisma.project.update({
-            where: { id: parseInt(id) },
+            where: { slug: slug },
             data: {
                 title,
                 thumbnail: processedThumbnail,
@@ -226,14 +238,14 @@ apiRouter.put('/projects/:id', async (req, res) => {
     }
 });
 
-// DELETE /projects/:id - Delete project
-apiRouter.delete('/projects/:id', async (req, res) => {
-    const { id } = req.params;
-    console.log(`Received DELETE request for ID: ${id}`);
+// DELETE /projects/:slug - Delete project
+apiRouter.delete('/projects/:slug', async (req, res) => {
+    const { slug } = req.params;
+    console.log(`Received DELETE request for slug: ${slug}`);
     try {
         // First, fetch the project to get image paths
         const project = await prisma.project.findUnique({
-            where: { id: parseInt(id) }
+            where: { slug: slug }
         });
 
         if (project) {
@@ -248,7 +260,7 @@ apiRouter.delete('/projects/:id', async (req, res) => {
         }
 
         const deleted = await prisma.project.delete({
-            where: { id: parseInt(id) }
+            where: { slug: slug }
         });
         console.log('Deleted project:', deleted);
         res.json({ message: 'Project deleted successfully' });

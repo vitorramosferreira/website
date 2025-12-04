@@ -33,7 +33,7 @@ function Portfolio() {
                 gap: '2rem'
             }}>
                 {projects.map((project) => (
-                    <Link to={`/portfolio/${project.id}`} key={project.id} style={{ display: 'block' }}>
+                    <Link to={`/portfolio/${project.slug}`} key={project.id} style={{ display: 'block' }}>
                         <div className="portfolio-item" style={{
                             position: 'relative',
                             borderRadius: '1rem',

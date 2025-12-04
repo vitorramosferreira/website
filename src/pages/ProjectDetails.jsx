@@ -3,13 +3,13 @@ import { useParams, Link } from 'react-router-dom';
 import { api } from '../services/api';
 
 function ProjectDetails() {
-    const { id } = useParams();
+    const { id: slug } = useParams(); // Route param is still :id in App.jsx, but we treat it as slug
     const [project, setProject] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        api.getProject(id)
+        api.getProject(slug)
             .then(data => {
                 setProject(data);
                 setLoading(false);
@@ -19,7 +19,7 @@ function ProjectDetails() {
                 setError('Projeto não encontrado.');
                 setLoading(false);
             });
-    }, [id]);
+    }, [slug]);
 
     if (loading) return <div className="container" style={{ textAlign: 'center', padding: '4rem' }}>Carregando...</div>;
 
