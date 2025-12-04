@@ -31,7 +31,7 @@ app.post('/webhook', (req, res) => {
     const commands = [
         'git pull',
         'npm install',
-        'cd server && npm install',
+        'cd server && npm install && cd ..',
         'npm run build',
         'pm2 reload all'
     ];
