@@ -10,7 +10,7 @@ module.exports = {
         },
         {
             name: "webhook",
-            script: "./deploy/webhook.js",
+            script: "./deploy/webhook.cjs",
             env: {
                 PORT: 9000
             }
