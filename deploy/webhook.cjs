@@ -23,7 +23,10 @@ app.post('/webhook', (req, res) => {
 
     console.log('Webhook received. Starting deployment...');
 
-    // Execute deployment commands
+    // Respond immediately to GitHub to avoid timeout
+    res.status(200).send('Deployment started successfully');
+
+    // Execute deployment commands in background
     // 1. Pull latest code
     // 2. Install dependencies (root & server)
     // 3. Build frontend
@@ -42,10 +45,10 @@ app.post('/webhook', (req, res) => {
         if (err) {
             console.error('Deployment failed:', err);
             console.error(stderr);
-            return res.status(500).send('Deployment failed');
+            // We can't send a response here anymore, just log it
+            return;
         }
         console.log('Deployment success:', stdout);
-        res.status(200).send('Deployed successfully');
     });
 });
 
