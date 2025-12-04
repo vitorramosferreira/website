@@ -5,8 +5,7 @@ const path = require('path');
 
 const app = express();
 const PORT = 9000;
-const SECRET = 'MY_SUPER_SECRET_KEY'; // Change this to match your GitHub Webhook Secret
-
+const SECRET = 'kCDYSsyb0IjVizKYDto2NHOguHEAvIDOPuaguF4LicBjD91oGWo15eIUiNPEP4CC';
 app.use(express.json());
 
 app.post('/webhook', (req, res) => {
